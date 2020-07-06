@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FEB100</color>
+    <color name="colorPrimaryDark">#222222</color>
+    <color name="colorAccent">#00B0FF</color>
+    <color name="colorBG">#FFFFFF</color>
+    <color name="recyclerBG">#EFEFEF</color>
+
+    <color name="colorTransparentDark">#AA222222</color>
+    <color name="none">#00000000</color>
+</resources>

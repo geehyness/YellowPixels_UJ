@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1009278445262",
+    "firebase_url": "https://yellowpixelsapp.firebaseio.com",
+    "project_id": "yellowpixelsapp",
+    "storage_bucket": "yellowpixelsapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1009278445262:android:c05a4c1e7a78d89c2e129f",
+        "android_client_info": {
+          "package_name": "com.yukisoft.yellowpixels"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1009278445262-dvcdcik4b7l3c2ajjouafv64t7sphp5t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD38mhkS_w38wmdXi327ju16GBPPAoN0NQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1009278445262-dvcdcik4b7l3c2ajjouafv64t7sphp5t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
