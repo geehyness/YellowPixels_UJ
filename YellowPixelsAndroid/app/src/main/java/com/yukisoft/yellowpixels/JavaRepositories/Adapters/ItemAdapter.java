@@ -78,7 +78,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 .load(currentItem.getImages().get(0))
                 .resize(500, 500)
                 .centerCrop()
-                .placeholder(R.drawable.ic_sell)
+                .placeholder(R.drawable.ic_baseline_photo)
                 .networkPolicy(NetworkPolicy.OFFLINE)
                 .into(itemViewHolder.itemImage, new Callback() {
                     @Override
@@ -93,8 +93,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                                 .load(currentItem.getImages().get(0))
                                 .resize(500, 500)
                                 .centerCrop()
-                                .error(R.drawable.ic_business)
-                                .placeholder(R.drawable.ic_sell)
+                                .error(R.drawable.ic_baseline_photo)
+                                .placeholder(R.drawable.ic_baseline_photo)
                                 .into(itemViewHolder.itemImage, new Callback() {
                                     @Override
                                     public void onSuccess() {
@@ -111,7 +111,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
         itemViewHolder.itemTitle.setText(currentItem.getName());
         itemViewHolder.itemDescription.setText(currentItem.getDetails());
-        itemViewHolder.itemPrice.setText(String.format("E %.2f", currentItem.getPrice()));
+        itemViewHolder.itemPrice.setText(String.format("R %.2f", currentItem.getPrice()));
     }
 
     @Override

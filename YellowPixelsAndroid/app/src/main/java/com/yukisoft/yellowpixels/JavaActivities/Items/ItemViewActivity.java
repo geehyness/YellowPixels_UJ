@@ -6,19 +6,26 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.gson.Gson;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
+import com.yukisoft.yellowpixels.JavaActivities.Home.HomeActivity;
 import com.yukisoft.yellowpixels.JavaActivities.UserManagement.BusinessViewActivity;
 import com.yukisoft.yellowpixels.JavaActivities.UserManagement.ChatActivity;
 import com.yukisoft.yellowpixels.JavaActivities.MainActivity;
@@ -62,9 +69,85 @@ public class ItemViewActivity extends AppCompatActivity {
         txtBusiness.setVisibility(View.GONE);
         contactBusiness.setVisibility(View.GONE);
 
+        Button sold = findViewById(R.id.btnSold);
+        sold.setVisibility(View.GONE);
+        Button del = findViewById(R.id.btnDelete);
+        del.setVisibility(View.GONE);
+
+        if (currentUser != null) {
+            if (item.getUserId().equals(currentUser.getId())) {
+                sold.setVisibility(View.VISIBLE);
+                sold.setOnClickListener(v -> {
+                    new AlertDialog.Builder(ItemViewActivity.this, R.style.MyDialogTheme)
+                            .setIcon(R.drawable.ic_baseline_warning)
+                            .setTitle("Sold?")
+                            .setMessage("Are you sure you want to mark this item as sold?\nItems marked as sold will no longer appear on the application!")
+                            .setPositiveButton("Yes", (dialog, which) -> {
+                                item.setSold(true);
+
+                                FirebaseFirestore.getInstance().collection(CollectionName.ITEMS)
+                                        .document(item.getId())
+                                        .set(item)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                Toast.makeText(ItemViewActivity.this, "Item marked as sold!", Toast.LENGTH_SHORT).show();
+                                                finish();
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Toast.makeText(ItemViewActivity.this, "Failed to change item status.\nPlease Check your internet status!", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            })
+                            .setNegativeButton("No", null)
+                            .show();
+                });
+
+                del.setVisibility(View.VISIBLE);
+                del.setOnClickListener(v -> {
+                    new AlertDialog.Builder(ItemViewActivity.this, R.style.MyDialogTheme)
+                            .setIcon(R.drawable.ic_baseline_warning)
+                            .setTitle("Delete?")
+                            .setMessage("Are you sure you want to delete this item?\nItems marked as sold will no longer appear on the application!")
+                            .setPositiveButton("Yes", (dialog, which) -> {
+
+                                FirebaseFirestore.getInstance().collection(CollectionName.ITEMS_DELETED)
+                                        .document(item.getId())
+                                        .set(item)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                FirebaseFirestore.getInstance().collection(CollectionName.ITEMS)
+                                                        .document(item.getId())
+                                                        .delete()
+                                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                            @Override
+                                                            public void onSuccess(Void aVoid) {
+                                                                Toast.makeText(ItemViewActivity.this, "Item deleted!", Toast.LENGTH_SHORT).show();
+                                                                finish();
+                                                            }
+                                                        });
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Toast.makeText(ItemViewActivity.this, "Failed to delete item.\nPlease Check your internet status!", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            })
+                            .setNegativeButton("No", null)
+                            .show();
+                });
+            }
+        }
+
         Picasso.with(getBaseContext())
                 .load(item.getImages().get(0))
-                .placeholder(R.drawable.ic_business)
+                .placeholder(R.drawable.ic_baseline_photo)
                 .networkPolicy(NetworkPolicy.OFFLINE)
                 .into(itemPic, new Callback() {
                     @Override
@@ -77,8 +160,8 @@ public class ItemViewActivity extends AppCompatActivity {
                         //Try again online if cache failed
                         Picasso.with(getBaseContext())
                                 .load(item.getImages().get(0))
-                                .error(R.drawable.ic_business)
-                                .placeholder(R.drawable.ic_business)
+                                .error(R.drawable.ic_baseline_photo)
+                                .placeholder(R.drawable.ic_baseline_photo)
                                 .into(itemPic, new Callback() {
                                     @Override
                                     public void onSuccess() {
@@ -94,7 +177,7 @@ public class ItemViewActivity extends AppCompatActivity {
                 });
 
         txtName.setText(item.getName());
-        txtPrice.setText(String.format("E %.2f", item.getPrice()));
+        txtPrice.setText(String.format("R %.2f", item.getPrice()));
         txtDetails.setText(item.getDetails());
         //itemPic.setImageURI(imagesUri.get(0));
 
@@ -140,7 +223,7 @@ public class ItemViewActivity extends AppCompatActivity {
         imageAdapter.setOnItemClickListener(position ->
             Picasso.with(getBaseContext())
                 .load(item.getImages().get(position))
-                .placeholder(R.drawable.ic_business)
+                .placeholder(R.drawable.ic_baseline_photo)
                 .networkPolicy(NetworkPolicy.OFFLINE)
                 .into(itemPic, new Callback() {
                     @Override
@@ -153,8 +236,8 @@ public class ItemViewActivity extends AppCompatActivity {
                         //Try again online if cache failed
                         Picasso.with(getBaseContext())
                                 .load(item.getImages().get(position))
-                                .error(R.drawable.ic_business)
-                                .placeholder(R.drawable.ic_business)
+                                .error(R.drawable.ic_baseline_photo)
+                                .placeholder(R.drawable.ic_baseline_photo)
                                 .into(itemPic, new Callback() {
                                     @Override
                                     public void onSuccess() {

@@ -17,6 +17,11 @@ public class UserModel {
     private String location;
     private String details;
     private String category;
+    private boolean verified = false;
+
+    public boolean isVerified() {return verified; }
+
+    public void setVerified(boolean verified) { this.verified = verified; }
 
     public String getDetails() {
         return details;

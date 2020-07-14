@@ -1,5 +1,6 @@
 package com.yukisoft.yellowpixels.JavaActivities.Home.Fragments;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +22,10 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -39,6 +45,7 @@ import com.yukisoft.yellowpixels.JavaRepositories.Fixed.CollectionName;
 import com.yukisoft.yellowpixels.JavaRepositories.Models.ItemModel;
 import com.yukisoft.yellowpixels.JavaRepositories.Models.UserModel;
 import com.yukisoft.yellowpixels.JavaActivities.MainActivity;
+import com.yukisoft.yellowpixels.JavaRepositories.UIElements.MyProgressDialog;
 import com.yukisoft.yellowpixels.R;
 import com.yukisoft.yellowpixels.JavaActivities.Items.SellItemActivity;
 
@@ -74,9 +81,90 @@ public class ProfileFragment extends Fragment {
             profile.setVisibility(View.VISIBLE);
             initProfile(v);
 
+            Button verify = v.findViewById(id.btnVerification);
+            verify.setVisibility(View.GONE);
+
+            FirebaseAuth.getInstance().getCurrentUser().reload()
+            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    if (!currentUser.isVerified()) {
+                        if (FirebaseAuth.getInstance().getCurrentUser().isEmailVerified()) {
+                            currentUser.setVerified(true);
+                            FirebaseFirestore.getInstance().collection(CollectionName.USERS)
+                                    .document(currentUser.getId())
+                                    .set(currentUser);
+                        }
+                    }
+
+                    if (!FirebaseAuth.getInstance().getCurrentUser().isEmailVerified()) {
+                        verify.setVisibility(View.VISIBLE);
+                        verify.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                final MyProgressDialog progressDialog = new MyProgressDialog(getContext());
+                                progressDialog.setCanceledOnTouchOutside(false);
+                                progressDialog.setCancelable(false);
+                                progressDialog.show();
+
+                                FirebaseAuth.getInstance().getCurrentUser().sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        progressDialog.dismiss();
+                                        new AlertDialog.Builder(Objects.requireNonNull(getActivity()), R.style.MyDialogTheme)
+                                                .setIcon(drawable.ic_baseline_warning)
+                                                .setTitle("Sent")
+                                                .setMessage("Email verification has been sent!\n" +
+                                                        "Follow the link in your email to verify your account.")
+                                                .setPositiveButton("Ok", null)
+                                                .show();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    new AlertDialog.Builder(Objects.requireNonNull(getActivity()), R.style.MyDialogTheme)
+                            .setIcon(drawable.ic_baseline_warning)
+                            .setTitle("Unable to load profile")
+                            .setMessage("Unable to load all profile details. Check your internet and reopen the profile tab.")
+                            .setPositiveButton("Ok", null)
+                            .show();
+                }
+            });
+
             btnAddSellItem.setOnClickListener(v1 -> {
                 // start item sale activity
-                startActivity(new Intent(getActivity(), SellItemActivity.class).putExtra(MainActivity.CURRENT_USER, (new Gson()).toJson(currentUser)));
+                if (FirebaseAuth.getInstance().getCurrentUser().isEmailVerified())
+                    startActivity(new Intent(getActivity(), SellItemActivity.class).putExtra(MainActivity.CURRENT_USER, (new Gson()).toJson(currentUser)));
+                else
+                    new AlertDialog.Builder(getActivity(), R.style.MyDialogTheme)
+                            .setIcon(drawable.ic_baseline_warning)
+                            .setTitle("Unverified")
+                            .setMessage("You have to be verified to sell on this application!")
+                            .setPositiveButton("Get Verified", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    FirebaseAuth.getInstance().getCurrentUser().sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            new AlertDialog.Builder(Objects.requireNonNull(getActivity()), R.style.MyDialogTheme)
+                                                    .setIcon(drawable.ic_baseline_warning)
+                                                    .setTitle("Sent")
+                                                    .setMessage("Email verification has been sent!\n" +
+                                                            "Follow the link in your email to verify your account.")
+                                                    .setPositiveButton("Ok", null)
+                                                    .show();
+                                        }
+                                    });
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
             });
             if (currentUser.getType().equals(AccountType.Business)){
                 btnAddSellItem.show();
@@ -99,7 +187,7 @@ public class ProfileFragment extends Fragment {
         Picasso.with(getContext())
                 .load(currentUser.getDpURI())
                 .resize(500, 500)
-                .placeholder(R.drawable.ic_business)
+                .placeholder(R.drawable.ic_person)
                 .networkPolicy(NetworkPolicy.OFFLINE)
                 .into(businessIcon, new Callback() {
                     @Override
@@ -112,8 +200,8 @@ public class ProfileFragment extends Fragment {
                         //Try again online if cache failed
                         Picasso.with(getActivity())
                                 .load(currentUser.getDpURI())
-                                .error(drawable.ic_business)
-                                .placeholder(R.drawable.ic_business)
+                                .error(drawable.ic_person)
+                                .placeholder(drawable.ic_person)
                                 .resize(500, 500)
                                 .into(businessIcon, new Callback() {
                                     @Override
@@ -217,17 +305,20 @@ public class ProfileFragment extends Fragment {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
                         ItemModel tempItem = snapshot.toObject(ItemModel.class);
+                        tempItem.setId(snapshot.getId());
 
-                        boolean exists = false;
+                        if (!tempItem.isSold()) {
+                            boolean exists = false;
 
-                        for (ItemModel i1 : ItemList) {
-                            if (i1.equals(tempItem)) {
-                                exists = true;
+                            for (ItemModel i1 : ItemList) {
+                                if (i1.equals(tempItem)) {
+                                    exists = true;
+                                }
                             }
-                        }
 
-                        if (!exists) {
-                            ItemList.add(tempItem);
+                            if (!exists) {
+                                ItemList.add(tempItem);
+                            }
                         }
                     }
 

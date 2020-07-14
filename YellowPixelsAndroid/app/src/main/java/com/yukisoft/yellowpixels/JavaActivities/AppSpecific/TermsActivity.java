@@ -117,6 +117,9 @@ public class TermsActivity extends AppCompatActivity {
                 "our Terms and Conditions, do not hesitate to " +
                 "contact us at <a>yukicide@gmail.com</a>." + pClose;
 
+        terms += pOpen + "Please note that this application is in no way connected to " +
+                "or endorsed by the University of Johannesburg (UJ)!"+ pClose;
+
         TextView termsText = findViewById(R.id.termsText);
         termsText.setText(Html.fromHtml(terms));
     }

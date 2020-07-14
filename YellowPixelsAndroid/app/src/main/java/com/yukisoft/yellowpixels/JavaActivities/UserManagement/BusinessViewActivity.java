@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.gson.Gson;
@@ -85,17 +86,21 @@ public class BusinessViewActivity extends AppCompatActivity {
                .addOnSuccessListener(queryDocumentSnapshots -> {
                    for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
                        ItemModel tempItem = snapshot.toObject(ItemModel.class);
+                       assert tempItem != null;
+                       tempItem.setId(snapshot.getId());
 
-                       boolean exists = false;
+                       if (!tempItem.isSold()) {
+                           boolean exists = false;
 
-                       for (ItemModel i1 : ItemList) {
-                           if (i1.equals(tempItem)) {
-                               exists = true;
+                           for (ItemModel i1 : ItemList) {
+                               if (i1.equals(tempItem)) {
+                                   exists = true;
+                               }
                            }
-                       }
 
-                       if (!exists) {
-                           ItemList.add(tempItem);
+                           if (!exists) {
+                               ItemList.add(tempItem);
+                           }
                        }
                    }
 
@@ -120,23 +125,31 @@ public class BusinessViewActivity extends AppCompatActivity {
 
         //bDesc.setText(business.getDetails());
         //bStatus.setText(business.getType().toString().replace("_", " "));
-        bPhone.setText(String.format("Phone - %s", business.getLandLine()));
-        bWhatsapp.setText(String.format("Whatsapp - %s", business.getWhatsappNum()));
+        if (business.getLandLine() != null)
+            bPhone.setText(String.format("Phone - %s", business.getLandLine()));
+        else
+            bPhone.setText("Phone - ");
+
+        if (business.getWhatsappNum() != null)
+            bWhatsapp.setText(String.format("Whatsapp - %s", business.getWhatsappNum()));
+        else
+            bWhatsapp.setText("Whatsapp - ");
+
         bEmail.setText(String.format("Email - %s", business.getEmail()));
 
-        if (business.getType().equals(AccountType.Verified_Business)) {
-            bStatus.setText("Verified User");
+        if (business.isVerified()) {
+            bStatus.setText("Verified");
             icVerified.setVisibility(View.VISIBLE);
         } else {
-            bStatus.setText("Unverified User");
-            bStatus.setVisibility(View.GONE);
+            bStatus.setText("Unverified");
+            icVerified.setVisibility(View.GONE);
         }
 
         Picasso.with(BusinessViewActivity.this)
                 .load(business.getDpURI())
                 .resize(500, 500)
                 .centerCrop()
-                .placeholder(R.drawable.ic_business)
+                .placeholder(R.drawable.ic_person)
                 .networkPolicy(NetworkPolicy.OFFLINE)
                 .into(imgBusinessPic, new Callback() {
                     @Override
@@ -151,8 +164,8 @@ public class BusinessViewActivity extends AppCompatActivity {
                                 .load(business.getDpURI())
                                 .resize(500, 500)
                                 .centerCrop()
-                                .placeholder(R.drawable.ic_business)
-                                .error(R.drawable.ic_business)
+                                .placeholder(R.drawable.ic_person)
+                                .error(R.drawable.ic_person)
                                 .into(imgBusinessPic, new Callback() {
                                     @Override
                                     public void onSuccess() {

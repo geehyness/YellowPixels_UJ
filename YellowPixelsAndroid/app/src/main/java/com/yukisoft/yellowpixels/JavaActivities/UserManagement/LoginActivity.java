@@ -76,22 +76,25 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private void login(){
         final UserModel[] currUser = {null};
-        EditText username = findViewById(R.id.txtEmail),
-                password = findViewById(R.id.txtPassword);
+        EditText sNum = findViewById(R.id.txtEmail),
+                password = findViewById(R.id.txtRegPassword);
 
-        final String uemail = username.getText().toString().trim();
+        final String uemail = sNum.getText().toString().trim() + "@student.uj.ac.za";
         String upass = password.getText().toString().trim();
 
         // Validating input
         if (TextUtils.isEmpty(uemail)) {
-            Toast.makeText(LoginActivity.this, "Email cannot be empty!", Toast.LENGTH_SHORT).show();
-            username.requestFocus();
+            sNum.setError("Student number cannot be empty!");
+            return;
+        }
+
+        if (sNum.getText().toString().trim().length() != 9) {
+            sNum.setError("Student number is invalid!");
             return;
         }
 
         if (!Patterns.EMAIL_ADDRESS.matcher(uemail).matches()) {
-            Toast.makeText(LoginActivity.this, "Email is invalid!", Toast.LENGTH_SHORT).show();
-            username.requestFocus();
+            sNum.setError("Email is invalid!");
             return;
         }
 

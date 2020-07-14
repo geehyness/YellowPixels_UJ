@@ -12,6 +12,7 @@ public class ItemModel {
     private String userId;
     private String category;
     private ArrayList<String> images = new ArrayList<>();
+    private boolean sold = false;
 
     /**
      * GETTERS
@@ -23,6 +24,7 @@ public class ItemModel {
     public String getDetails() { return details; }
     public String getCategory() { return category; }
     public ArrayList<String> getImages() { return images; }
+    public boolean isSold() { return sold; }
 
     /**
      * SETTERS
@@ -34,6 +36,9 @@ public class ItemModel {
     public void setUserId(String userId) { this.userId = userId; }
     public void setCategory(String category) { this.category = category; }
     public void setImages(ArrayList<String> images) { this.images = images; }
+    public void setSold(boolean sold) {
+        this.sold = sold;
+    }
 
     /**
      * EMPTY CONSTRUCTOR
@@ -57,4 +62,8 @@ public class ItemModel {
         this.category = category;
         this.images = images;
     }
+
+
+
+
 }

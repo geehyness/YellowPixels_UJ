@@ -133,7 +133,12 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         txtBusinessName.setText(business.getName());
-        txtBusinessType.setText(business.getType().toString().replace("_", " "));
+        
+        if (business.isVerified())
+            txtBusinessType.setText("Verified");
+        else
+            txtBusinessType.setText("Unverified");
+
         imgBack.setOnClickListener(v -> finish());
         Picasso.with(ChatActivity.this)
                 .load(currentUser.getDpURI())

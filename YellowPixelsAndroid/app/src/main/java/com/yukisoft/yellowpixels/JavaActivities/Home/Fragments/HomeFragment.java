@@ -112,22 +112,24 @@ public class HomeFragment extends Fragment {
         buildRecyclerView(view);
 
         itemRef.get().addOnSuccessListener(queryDocumentSnapshots -> {
-           if (queryDocumentSnapshots != null){
-               for(DocumentSnapshot msg : queryDocumentSnapshots){
+            if (queryDocumentSnapshots != null){
+                for(DocumentSnapshot msg : queryDocumentSnapshots){
                    ItemModel tempUser = msg.toObject(ItemModel.class);
                    assert tempUser != null;
                    tempUser.setId(msg.getId());
 
-                   boolean exists = false;
+                   if (!tempUser.isSold()) {
+                       boolean exists = false;
 
-                   for (ItemModel m : ItemList)
-                       if(m.getId().equals(tempUser.getId()))
-                           exists = true;
+                       for (ItemModel m : ItemList)
+                           if(m.getId().equals(tempUser.getId()))
+                               exists = true;
 
-                   if(!exists)
-                       ItemList.add(tempUser);
-               }
-               isLoading = false;
+                       if(!exists)
+                           ItemList.add(tempUser);
+                   }
+                }
+                isLoading = false;
            }
            //Collections.sort(displayItemList, new AlphabetComparator());
            //Collections.sort(MTList, new AlphabetComparator());
@@ -344,7 +346,8 @@ public class HomeFragment extends Fragment {
             .addOnSuccessListener(queryDocumentSnapshots -> {
                 for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                     CategoryModel cat = documentSnapshot.toObject(CategoryModel.class);
-
+                    assert cat != null;
+                    cat.setId(documentSnapshot.getId());
                     catList.add(cat);
                 }
                 catAdapter.notifyDataSetChanged();

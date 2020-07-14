@@ -235,7 +235,7 @@ public class SellItemActivity extends AppCompatActivity {
                         } else {
                             progressBarUpload.setProgress((int) progress);
                         }
-                        txtProgress.setText(progress*100 + "%");
+                        txtProgress.setText(progress + "%");
                     });
         }
     }

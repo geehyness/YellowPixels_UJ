@@ -1,5 +1,6 @@
 package com.yukisoft.yellowpixels.JavaActivities.UserManagement;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -17,6 +18,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.gson.Gson;
@@ -31,6 +34,7 @@ import com.yukisoft.yellowpixels.JavaActivities.MainActivity;
 import com.yukisoft.yellowpixels.R;
 
 import java.util.Date;
+import java.util.Objects;
 
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
     private final FirebaseAuth fbAuth = FirebaseAuth.getInstance();
@@ -94,20 +98,20 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onBackPressed() {
         new AlertDialog.Builder(this, R.style.MyDialogTheme)
-            .setIcon(android.R.drawable.ic_dialog_alert)
-            .setTitle("Go back to App?")
-            .setMessage("Do you wish to continue without Registering?")
-            .setPositiveButton("Yes", (dialog, which) -> {
-                startActivity(new Intent(RegisterActivity.this, HomeActivity.class));
-                finish();
-            })
-            .setNegativeButton("No", null)
-            .show();
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Go back to App?")
+                .setMessage("Do you wish to continue without Registering?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    startActivity(new Intent(RegisterActivity.this, HomeActivity.class));
+                    finish();
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     private void registerUser() {
         final String uname = editTextName.getText().toString().trim();
-        final String uemail = editTextEmail.getText().toString().trim();
+        final String uemail = editTextEmail.getText().toString().trim() + "@student.uj.ac.za";
         String upass = editTextPassword.getText().toString().trim();
 
         if (TextUtils.isEmpty(uname)) {
@@ -116,7 +120,12 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
 
         if (TextUtils.isEmpty(uemail)) {
-            editTextEmail.setError("Email cannot be empty!");
+            editTextEmail.setError("Student number cannot be empty!");
+            return;
+        }
+
+        if (editTextEmail.getText().toString().trim().length() != 9) {
+            editTextEmail.setError("Student number is invalid!");
             return;
         }
 
@@ -167,18 +176,39 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
                         ff.collection(CollectionName.USERS).document(user.getId()).set(user).addOnSuccessListener(aVoid -> {
                             progressDialog.dismiss();
-                            Toast.makeText(RegisterActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(RegisterActivity.this, HomeActivity.class)
-                                    .putExtra(MainActivity.CURRENT_USER, (new Gson()).toJson(user)));
-                            finish();
+
+                            fbAuth.getCurrentUser().sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    new AlertDialog.Builder(RegisterActivity.this, R.style.MyDialogTheme)
+                                            .setIcon(R.drawable.ic_baseline_warning)
+                                            .setTitle("Verify Email")
+                                            .setMessage("Email verification has been sent!\n" +
+                                                    "Follow the link in your email to verify your account.")
+                                            .setPositiveButton("Ok", null)
+                                            .show();
+
+                                    startActivity(new Intent(RegisterActivity.this, HomeActivity.class)
+                                            .putExtra(MainActivity.CURRENT_USER, (new Gson()).toJson(user)));
+                                    finish();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Toast.makeText(RegisterActivity.this, "Unable to send verification email!", Toast.LENGTH_SHORT).show();
+                                    startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                                    finish();
+                                }
+                            });
                         }).addOnFailureListener(e -> {
                             progressDialog.dismiss();
                             Toast.makeText(RegisterActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         });
                     }).addOnFailureListener(e -> {
-                        progressDialog.dismiss();
-                        Toast.makeText(RegisterActivity.this, "Registration Failed.\n\nError - " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
+                progressDialog.dismiss();
+                Toast.makeText(RegisterActivity.this, "Registration Failed.\n\nError - " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
         } catch (Exception e){
             Toast.makeText(RegisterActivity.this, e.toString(), Toast.LENGTH_LONG).show();
         }
